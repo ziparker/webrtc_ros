@@ -72,6 +72,8 @@ void RosVideoCapturer::imageCallback(const sensor_msgs::ImageConstPtr& msg)
     else
     {
       cv::Mat m;
+      out_width &= ~1ul;
+      out_height &= ~1ul;
       cv::resize(bgr(roi), m, cv::Size2i(out_width, out_height), 0, 0, out_width < roi.width ? cv::INTER_AREA : cv::INTER_LINEAR);
       cv::cvtColor(m, yuv, CV_BGR2YUV_I420);
     }
