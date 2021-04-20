@@ -5,6 +5,7 @@
 #include <webrtc_ros/ice_candidate_message.h>
 //#include "talk/media/devices/devicemanager.h"
 #include <webrtc/api/video/video_source_interface.h>
+#include <webrtc/modules/audio_device/include/fake_audio_device.h>
 #include <webrtc/rtc_base/bind.h>
 #include <webrtc_ros/ros_video_capturer.h>
 #include <webrtc_ros/GetIceServers.h>
@@ -72,7 +73,10 @@ WebrtcClient::WebrtcClient(ros::NodeHandle& nh, const ImageTransportFactory& itf
   worker_thread_->Start();
   peer_connection_factory_  = webrtc::CreatePeerConnectionFactory(
         worker_thread_.get(), worker_thread_.get(), worker_thread_.get(),
-        nullptr, webrtc::CreateBuiltinAudioEncoderFactory(),
+        // TODO: add audio device option.
+        new webrtc::FakeAudioDeviceModule(),
+        //nullptr,
+        webrtc::CreateBuiltinAudioEncoderFactory(),
         webrtc::CreateBuiltinAudioDecoderFactory(),
         std::unique_ptr<webrtc::VideoEncoderFactory>(
             new webrtc::MultiplexEncoderFactory(
