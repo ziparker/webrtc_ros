@@ -47,4 +47,33 @@ on_ready(function() {
 		document.getElementById("topic").textContent = "not connected";
 		console.log("No subscribe_video parameter, not connecting to WebRTC video stream");
 	}
+
+    var vid = document.getElementById("remote-video");
+
+    const fpsLen = 10;
+    var startTime = new Array(fpsLen).fill(0);
+    var startFrameCount = new Array(fpsLen).fill(0);
+    var startFrameTime = new Array(fpsLen).fill(0);
+    var fpsIdx = 0;
+
+    const cb = (now, meta) => {
+            vid.requestVideoFrameCallback(cb);
+
+            let frameNow = meta['receiveTime'];
+            let frameCount = meta['presentedFrames'];
+
+            if (startTime[fpsIdx] != 0) {
+                let rate = (frameCount - startFrameCount[fpsIdx]) / (frameNow - startFrameTime[fpsIdx]) * 1000.0;
+
+                console.log('interval ' + ((now - startTime[fpsIdx]) / 1000) + ' fps: ' + rate);
+            }
+
+            startTime[fpsIdx] = now;
+            startFrameCount[fpsIdx] = frameCount;
+            startFrameTime[fpsIdx] = frameNow;
+
+            fpsIdx = (fpsIdx + 1) % fpsLen;
+        };
+
+    vid.requestVideoFrameCallback(cb);
 });
