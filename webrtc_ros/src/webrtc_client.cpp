@@ -77,6 +77,10 @@ WebrtcClient::WebrtcClient(ros::NodeHandle& nh, const ImageTransportFactory& itf
         //nullptr,
         webrtc::CreateBuiltinAudioEncoderFactory(),
         webrtc::CreateBuiltinAudioDecoderFactory(),
+        // XXX: beware, webrtc 97df932ecc58ac9ee49192992c22995809145cbf from
+        // Feb 2024 removes support for the multiplex codec.
+        //
+        // we can probably just use the BuiltinVideo*coderFactory directly.
         std::unique_ptr<webrtc::VideoEncoderFactory>(
             new webrtc::MultiplexEncoderFactory(
                 std::make_unique<webrtc::InternalEncoderFactory>())),
