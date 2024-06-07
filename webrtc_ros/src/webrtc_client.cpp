@@ -6,7 +6,6 @@
 //#include "talk/media/devices/devicemanager.h"
 #include <webrtc/api/video/video_source_interface.h>
 #include <webrtc/modules/audio_device/include/fake_audio_device.h>
-#include <webrtc/rtc_base/bind.h>
 #include <webrtc_ros/ros_video_capturer.h>
 #include <webrtc_ros/GetIceServers.h>
 
@@ -74,7 +73,7 @@ WebrtcClient::WebrtcClient(ros::NodeHandle& nh, const ImageTransportFactory& itf
   peer_connection_factory_  = webrtc::CreatePeerConnectionFactory(
         worker_thread_.get(), worker_thread_.get(), worker_thread_.get(),
         // TODO: add audio device option.
-        new webrtc::FakeAudioDeviceModule(),
+        rtc::scoped_refptr<webrtc::AudioDeviceModule>(new webrtc::FakeAudioDeviceModule()),
         //nullptr,
         webrtc::CreateBuiltinAudioEncoderFactory(),
         webrtc::CreateBuiltinAudioDecoderFactory(),
@@ -168,7 +167,7 @@ public:
   {
     WebrtcClientPtr _this = weak_this_.lock();
     if (_this)
-      _this->signaling_thread_->Invoke<void>(RTC_FROM_HERE, rtc::Bind(&WebrtcClient::handle_message,
+      _this->signaling_thread_->BlockingCall(std::bind(&WebrtcClient::handle_message,
 						       _this.get(), type, raw));
   }
 private:
@@ -276,7 +275,7 @@ void WebrtcClient::handle_message(MessageHandler::Type type, const std::string& 
 
                     rtc::scoped_refptr<webrtc::MediaStreamInterface> stream = peer_connection_factory_->CreateLocalMediaStream(stream_id);
 
-                    if (!peer_connection_->AddStream(stream))
+                    if (!peer_connection_->AddStream(stream.get()))
                     {
                       ROS_WARN("Adding stream to PeerConnection failed");
                 continue;
@@ -291,7 +290,7 @@ void WebrtcClient::handle_message(MessageHandler::Type type, const std::string& 
                 ROS_WARN_STREAM("Stream not found with id: " << stream_id);
                 continue;
               }
-                    peer_connection_->RemoveStream(stream);
+                    peer_connection_->RemoveStream(stream.get());
             }
             else if(action.type == ConfigureAction::kAddVideoTrackActionName) {
               FIND_PROPERTY_OR_CONTINUE("stream_id", stream_id);
@@ -316,8 +315,8 @@ void WebrtcClient::handle_message(MessageHandler::Type type, const std::string& 
                       rtc::scoped_refptr<RosVideoCapturer> capturer(new rtc::RefCountedObject<RosVideoCapturer>(itf_, video_path, transport_));
                       rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track(
                         peer_connection_factory_->CreateVideoTrack(
-                          track_id,
-                          capturer));
+                          capturer,
+                          track_id));
                       stream->AddTrack(video_track);
                       capturer->Start();
               }
@@ -346,11 +345,10 @@ void WebrtcClient::handle_message(MessageHandler::Type type, const std::string& 
 
               if(audio_type == "local") {
                 cricket::AudioOptions options;
+                auto src = peer_connection_factory_->CreateAudioSource(options);
                 rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
-                  peer_connection_factory_->CreateAudioTrack(
-                    track_id,
-              peer_connection_factory_->CreateAudioSource(options)));
-                      stream->AddTrack(audio_track);
+                  peer_connection_factory_->CreateAudioTrack(track_id, src.get()));
+                stream->AddTrack(audio_track);
               }
               else {
                 ROS_WARN_STREAM("Unknown video source type: " << audio_type);
@@ -407,7 +405,9 @@ void WebrtcClient::handle_message(MessageHandler::Type type, const std::string& 
 
       ROS_DEBUG_STREAM("Received remote description: " << message.sdp);
       rtc::scoped_refptr<DummySetSessionDescriptionObserver> dummy_set_description_observer(new rtc::RefCountedObject<DummySetSessionDescriptionObserver>());
-      peer_connection_->SetRemoteDescription(dummy_set_description_observer, session_description);
+      peer_connection_->SetRemoteDescription(
+        dummy_set_description_observer.get(),
+        session_description);
     }
     else if (IceCandidateMessage::isIceCandidate(message_json))
     {
@@ -456,7 +456,7 @@ void WebrtcClient::handle_message(MessageHandler::Type type, const std::string& 
 void WebrtcClient::OnSessionDescriptionSuccess(webrtc::SessionDescriptionInterface* description)
 {
   rtc::scoped_refptr<DummySetSessionDescriptionObserver> dummy_set_description_observer(new rtc::RefCountedObject<DummySetSessionDescriptionObserver>());
-  peer_connection_->SetLocalDescription(dummy_set_description_observer, description);
+  peer_connection_->SetLocalDescription(dummy_set_description_observer.get(), description);
 
   SdpMessage message;
   if (message.fromSessionDescription(*description))

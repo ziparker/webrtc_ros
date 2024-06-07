@@ -9,6 +9,7 @@
 #include <webrtc/rtc_base/event.h>
 #include <webrtc/rtc_base/thread.h>
 #include <webrtc_ros/image_transport_factory.h>
+#include <webrtc_ros/cpp_macros.h>
 #include <mutex>
 #include <boost/enable_shared_from_this.hpp>
 
@@ -37,7 +38,7 @@ public:
 	bool remote() const override;
 
 private:
-  RTC_DISALLOW_COPY_AND_ASSIGN(RosVideoCapturer);
+  WEBRTC_ROS_DISALLOW_COPY_AND_ASSIGN(RosVideoCapturer);
   boost::shared_ptr<RosVideoCapturerImpl> impl_;
 };
 
@@ -56,7 +57,7 @@ public:
   void Stop();
 
 private:
-  RTC_DISALLOW_COPY_AND_ASSIGN(RosVideoCapturerImpl);
+  WEBRTC_ROS_DISALLOW_COPY_AND_ASSIGN(RosVideoCapturerImpl);
 
   ImageTransportFactory it_;
   const std::string topic_, transport_;

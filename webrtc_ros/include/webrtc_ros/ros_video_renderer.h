@@ -1,6 +1,7 @@
 #ifndef WEBRTC_ROS_ROS_VIDEO_RENDERER_H_
 #define WEBRTC_ROS_ROS_VIDEO_RENDERER_H_
 
+#include <webrtc_ros/cpp_macros.h>
 #include <webrtc/api/media_stream_interface.h>
 #include <image_transport/image_transport.h>
 
@@ -16,7 +17,7 @@ public:
   virtual void OnFrame(const webrtc::VideoFrame& frame) override;
 
 private:
-  RTC_DISALLOW_COPY_AND_ASSIGN(RosVideoRenderer);
+  WEBRTC_ROS_DISALLOW_COPY_AND_ASSIGN(RosVideoRenderer);
   image_transport::ImageTransport it_;
   const std::string topic_;
   image_transport::Publisher pub_;
