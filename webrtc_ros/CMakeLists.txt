@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.5)
 project(webrtc_ros)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -95,7 +95,7 @@ target_link_libraries(${PROJECT_NAME}_server
   jsoncpp_lib
 )
 
-set_target_properties(${PROJECT_NAME}_server PROPERTIES COMPILE_OPTIONS "-std=c++14")
+set_target_properties(${PROJECT_NAME}_server PROPERTIES CXX_STANDARD 17)
 
 add_executable(${PROJECT_NAME}_server_node
   src/webrtc_ros_server_node.cpp
@@ -105,7 +105,7 @@ target_link_libraries(${PROJECT_NAME}_server_node
   ${PROJECT_NAME}_server
   ${PROJECT_NAME}_server_noncpp11
 )
-set_target_properties(${PROJECT_NAME}_server_node PROPERTIES COMPILE_OPTIONS "-std=c++14")
+set_target_properties(${PROJECT_NAME}_server_node PROPERTIES CXX_STANDARD 17)
 
 #add_library(${PROJECT_NAME}_server_nodelet
 #  src/webrtc_ros_server_nodelet.cpp
