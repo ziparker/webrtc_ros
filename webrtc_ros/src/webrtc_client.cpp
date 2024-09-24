@@ -142,6 +142,13 @@ bool WebrtcClient::initPeerConnection()
       }
     }
 
+    // XXX: this setting is deprecated, but required to avoid changing how
+    // tracks are added (todo).
+    //
+    // see: https://webrtc.org/getting-started/unified-plan-transition-guide
+    ROS_INFO("using deprecated planb sdp semantics.");
+    config.sdp_semantics = webrtc::SdpSemantics::kPlanB;
+
     WebrtcClientWeakPtr weak_this(keep_alive_this_);
     webrtc_observer_proxy_ = new rtc::RefCountedObject<WebrtcClientObserverProxy>(weak_this);
     peer_connection_ = peer_connection_factory_->CreatePeerConnection(
